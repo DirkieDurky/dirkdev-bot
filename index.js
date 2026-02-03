@@ -33,40 +33,49 @@ function parseDate(date) {
 };
 
 client.on(Events.MessageCreate, async (message) => {
-    if (message.author.bot) return;
-    console.log(formatDate(new Date()), "|", "Message received.");
-    if (message.channelId !== process.env.DISCORD_TARGET_CHANNEL_ID) {
-        console.log(formatDate(new Date()), "|", "Channel doesn't match");
-        return;
-    }
-    if (message.author.id !== process.env.DISCORD_TARGET_AUTHOR_ID) {
-        console.log(formatDate(new Date()), "|", "Author doesn't match");
-        return;
-    }
-    console.log(formatDate(new Date()), "|", "Channel and author correct");
+    try {
+        if (message.author.bot) return;
+        console.log(formatDate(new Date()), "|", "Message received.");
+        if (message.channelId !== process.env.DISCORD_TARGET_CHANNEL_ID) {
+            console.log(formatDate(new Date()), "|", "Channel doesn't match");
+            return;
+        }
+        if (message.author.id !== process.env.DISCORD_TARGET_AUTHOR_ID) {
+            console.log(formatDate(new Date()), "|", "Author doesn't match");
+            return;
+        }
+        console.log(formatDate(new Date()), "|", "Channel and author correct");
 
-    const dateRegex = new RegExp(`\\d{1,2} (${months.join("|")})`, "g");
-    const dateStrings = message.content.match(dateRegex);
+        const dateRegex = new RegExp(`\\d{1,2} (${months.join("|")})`, "g");
+        const dateStrings = message.content.match(dateRegex);
 
-    console.log(formatDate(new Date()), "|", "Found these dates in the message:");
-    console.log(formatDate(new Date()), "|", dateStrings);
+        if (dateStrings === null) {
+            console.log(formatDate(new Date()), "|", "No dates found.");
+            return;
+        }
 
-    console.log(formatDate(new Date()), "|", "Those parse to the following dates:");
-    const dates = [];
-    for (const dateStr of dateStrings) {
-        const date = parseDate(dateStr);
-        dates.push(date);
-        console.log(date.toString());
-    }
+        console.log(formatDate(new Date()), "|", "Found these dates in the message:");
+        console.log(formatDate(new Date()), "|", dateStrings);
 
-    for (let date of dates) {
-        const startDateTime = new Date(date.getTime());
-        startDateTime.setHours(13);
-        startDateTime.setMinutes(30);
-        const endDateTime = new Date(date.getTime());
-        endDateTime.setHours(15);
-        endDateTime.setMinutes(45);
-        await googleCalendar.createEvent(calendarApi, process.env.CALENDAR_ID, startDateTime, endDateTime);
+        console.log(formatDate(new Date()), "|", "Those parse to the following dates:");
+        const dates = [];
+        for (const dateStr of dateStrings) {
+            const date = parseDate(dateStr);
+            dates.push(date);
+            console.log(date.toString());
+        }
+
+        for (let date of dates) {
+            const startDateTime = new Date(date.getTime());
+            startDateTime.setHours(13);
+            startDateTime.setMinutes(30);
+            const endDateTime = new Date(date.getTime());
+            endDateTime.setHours(15);
+            endDateTime.setMinutes(45);
+            await googleCalendar.createEvent(calendarApi, process.env.CALENDAR_ID, startDateTime, endDateTime);
+        }
+    } catch (err) {
+        console.error(`Error: ${err}`);
     }
 });
 
