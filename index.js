@@ -12,9 +12,6 @@ const client = new Client({
     ]
 });
 
-const targetChannelID = '747230092643532910';
-const targetAuthorID = '155367988328005632';
-
 const calendarApi = await googleCalendar.authorizeOnStartup();
 
 client.once(Events.ClientReady, (readyClient) => {
@@ -38,8 +35,7 @@ function parseDate(date) {
 
 client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
-    console.log(formatDate(new Date()), "|", "Message received:");
-    console.log(message);
+    console.log(formatDate(new Date()), "|", "Message received.");
     if (message.channelId !== process.env.DISCORD_TARGET_CHANNEL_ID) {
         console.log(formatDate(new Date()), "|", "Channel doesn't match");
         return;
