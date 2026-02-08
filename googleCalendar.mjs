@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 const REDIRECT_URI = "http://localhost";
 
-export async function authorizeOnce() {
+export async function getRefreshToken() {
     const oauth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, REDIRECT_URI);
 
     const authUrl = oauth2Client.generateAuthUrl({
@@ -30,7 +30,7 @@ export async function authorizeOnce() {
     });
 }
 
-export async function authorizeOnStartup() {
+export async function authorizeGoogleAPI() {
     const oauth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, REDIRECT_URI);
     oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
@@ -39,6 +39,19 @@ export async function authorizeOnStartup() {
             console.log('Access token refreshed, expires at', new Date(tokens.expiry_date).toString());
         }
     });
+
+    try {
+        const res = await oauth2Client.getAccessToken();
+    } catch (err) {
+        if (err.response.data.error === "invalid_grant") {
+            console.error("Refresh token has been expired or revoked. Please make a new one.");
+            await generateRefreshToken();
+            process.exit(1);
+        } else {
+            console.log("Something went wrong getting an access token:");
+            console.log(err);
+        }
+    }
 
     return google.calendar({ version: 'v3', auth: oauth2Client });
 }

@@ -11,7 +11,7 @@ const client = new Client({
     ]
 });
 
-const calendarApi = await googleCalendar.authorizeOnStartup();
+const calendarApi = await googleCalendar.authorizeGoogleAPI();
 
 client.once(Events.ClientReady, (readyClient) => {
     console.log(formatDate(new Date()), "|", `Ready! Logged in as ${readyClient.user.tag}`);
@@ -36,13 +36,19 @@ client.on(Events.MessageCreate, async (message) => {
     try {
         if (message.author.bot) return;
         console.log(formatDate(new Date()), "|", "Message received.");
-        if (message.channelId !== process.env.DISCORD_TARGET_CHANNEL_ID) {
-            console.log(formatDate(new Date()), "|", "Channel doesn't match");
-            return;
+
+        if (process.env.DEBUG && message.channelId === process.env.DISCORD_DEBUG_TARGET_CHANNEL_ID) {
+            console.log("Debug mode is enabled and test channel is used. Ignoring channel and author check.");
         }
-        if (message.author.id !== process.env.DISCORD_TARGET_AUTHOR_ID) {
-            console.log(formatDate(new Date()), "|", "Author doesn't match");
-            return;
+        else {
+            if (message.channelId !== process.env.DISCORD_TARGET_CHANNEL_ID) {
+                console.log(formatDate(new Date()), "|", "Channel doesn't match");
+                return;
+            }
+            if (message.author.id !== process.env.DISCORD_TARGET_AUTHOR_ID) {
+                console.log(formatDate(new Date()), "|", "Author doesn't match");
+                return;
+            }
         }
         console.log(formatDate(new Date()), "|", "Channel and author correct");
 
