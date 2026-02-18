@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { parseSingleDate, formatDate } from '../../helpers.mjs';
+import { parseSingleDate, formatDate, formatDateShort } from '../../helpers.mjs';
 import * as googleCalendar from "../../googleCalendar.mjs";
 import 'dotenv/config';
 
@@ -14,5 +14,5 @@ export async function execute(interaction) {
     console.log(`Parsed dates: ${formatDate(fromDate)}, ${formatDate(toDate)}`);
 
     await googleCalendar.moveEvents(process.env.CALENDAR_ID, fromDate, toDate);
-    await interaction.reply(`Moved sessions from ${formatDate(fromDate)} to ${formatDate(toDate)}`);
+    await interaction.reply(`Moved sessions from ${formatDateShort(fromDate)} to ${formatDateShort(toDate)}`);
 }

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { parseSingleDate, formatDate } from '../../helpers.mjs';
+import { parseSingleDate, formatDate, formatDateShort } from '../../helpers.mjs';
 import * as googleCalendar from "../../googleCalendar.mjs";
 import 'dotenv/config';
 
@@ -18,5 +18,5 @@ export async function execute(interaction) {
     const endDateTime = new Date(startDateTime.getTime());
     endDateTime.setDate(startDateTime.getDate() + 1);
     const removedAmount = await googleCalendar.clearDays(process.env.CALENDAR_ID, startDateTime, endDateTime);
-    await interaction.reply(`Removed ${removedAmount ?? 0} session${removedAmount == 1 ? "" : "s"}`);
+    await interaction.reply(`Removed ${removedAmount ?? 0} session${removedAmount == 1 ? "" : "s"} at ${formatDateShort(date)}`);
 }

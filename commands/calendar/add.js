@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { parseSingleDate, formatDate } from '../../helpers.mjs';
+import { parseSingleDate, formatDate, formatDateShort } from '../../helpers.mjs';
 import * as googleCalendar from "../../googleCalendar.mjs";
 import 'dotenv/config';
 
@@ -17,5 +17,5 @@ export async function execute(interaction) {
     endDateTime.setHours(15);
     endDateTime.setMinutes(45);
     await googleCalendar.createEvent(process.env.CALENDAR_ID, startDateTime, endDateTime);
-    await interaction.reply('Added session!');
+    await interaction.reply(`Added session at ${formatDateShort(date)}`);
 }

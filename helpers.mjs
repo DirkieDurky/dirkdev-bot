@@ -5,7 +5,7 @@ export function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const dateFormatter = new Intl.DateTimeFormat("en-US", {
+const dateFormatter = new Intl.DateTimeFormat("nl-NL", {
     timeZone: "Europe/Amsterdam",
     year: "numeric",
     month: "short",
@@ -17,8 +17,18 @@ export const dateFormatter = new Intl.DateTimeFormat("en-US", {
     hour12: false
 });
 
+const dateFormatterShort = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    dateStyle: "long",
+    hour12: false
+});
+
 export function formatDate(date) {
     return dateFormatter.format(date).replaceAll(", ", " ");
+}
+
+export function formatDateShort(date) {
+    return dateFormatterShort.format(date).replaceAll(", ", " ");
 }
 
 export function dirname() { return path.dirname(fileURLToPath(import.meta.url)); }
