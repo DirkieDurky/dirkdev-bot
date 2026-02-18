@@ -24,7 +24,7 @@ client.on(Events.MessageCreate, async (message) => {
         if (message.author.bot) return;
         console.log(formatDate(new Date()), "|", "Message received.");
 
-        if (process.env.DEBUG && message.channelId === process.env.DISCORD_DEBUG_TARGET_CHANNEL_ID) {
+        if (process.env.DEBUG == "true" && message.channelId === process.env.DISCORD_DEBUG_TARGET_CHANNEL_ID) {
             console.log("Debug mode is enabled and test channel is used. Ignoring channel and author check.");
         }
         else {
@@ -32,7 +32,7 @@ client.on(Events.MessageCreate, async (message) => {
                 console.log(formatDate(new Date()), "|", "Channel doesn't match");
                 return;
             }
-            if (message.author.id !== process.env.DISCORD_TARGET_AUTHOR_ID) {
+            if (!process.env.DISCORD_TARGET_AUTHOR_IDS.split(',').includes(message.author.id)) {
                 console.log(formatDate(new Date()), "|", "Author doesn't match");
                 return;
             }
@@ -93,6 +93,21 @@ for (const folder of commandFolders) {
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
+
+    if (process.env.DEBUG == "true" && interaction.channelId === process.env.DISCORD_DEBUG_TARGET_CHANNEL_ID) {
+        console.log("Debug mode is enabled and test channel is used. Ignoring channel and author check.");
+    }
+    else {
+        if (interaction.channelId !== process.env.DISCORD_TARGET_CHANNEL_ID) {
+            console.log(formatDate(new Date()), "|", "Channel doesn't match");
+            return;
+        }
+        if (!process.env.DISCORD_TARGET_AUTHOR_IDS.split(',').includes(interaction.member.id)) {
+            console.log(formatDate(new Date()), "|", "Author doesn't match");
+            return;
+        }
+    }
+
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
