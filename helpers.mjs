@@ -17,14 +17,24 @@ const dateFormatter = new Intl.DateTimeFormat("nl-NL", {
     hour12: false
 });
 
+const dateFormatterTime = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+});
+
 const dateFormatterShort = new Intl.DateTimeFormat("nl-NL", {
     timeZone: "Europe/Amsterdam",
     dateStyle: "long",
-    hour12: false
 });
 
 export function formatDate(date) {
     return dateFormatter.format(date).replaceAll(", ", " ");
+}
+
+export function formatDateTime(date) {
+    return dateFormatterTime.format(date).replaceAll(", ", " ");
 }
 
 export function formatDateShort(date) {
@@ -51,7 +61,46 @@ export function parseDate(date) {
     return new Date(year, month, day);
 };
 
-export function parseSingleDate(date) {
+export const sessionRegex = new RegExp(`(\\d{1,2}) (${months.join("|")})\\w*(?: van)? (\\d{1,2}):(\\d{1,2})(?: uur)?(?: tot)? (\\d{1,2}):(\\d{1,2})(?: uur)?`, "g");
+
+export function parseSession(dateStr) {
+    const matches = sessionRegex.exec(dateStr);
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    const month = months.indexOf(matches[2]);
+    let year = currentYear;
+    if (month < now.getMonth()) {
+        year++;
+    }
+    const day = matches[1];
+    const date = new Date(year, month, day);
+
+    const startDateTime = new Date(date.getTime());
+    startDateTime.setHours(matches[3]);
+    startDateTime.setMinutes(matches[4]);
+
+    const endDateTime = new Date(date.getTime());
+    endDateTime.setHours(matches[5]);
+    endDateTime.setMinutes(matches[6]);
+
+    return [startDateTime, endDateTime];
+};
+
+export function parseSingleDate(date, mayBeSession = false) {
+    if (mayBeSession) {
+        const sessionStrings = date.match(sessionRegex);
+
+        if (sessionStrings !== null) {
+            if (sessionStrings.length > 1) {
+                console.log(formatDate(new Date()), "|", "Multiple dates found. One is expected per parameter");
+                return;
+            }
+            return [true, parseSession(sessionStrings[0])];
+        }
+    }
+
     const dateStrings = date.match(dateRegex);
 
     if (dateStrings === null) {
@@ -63,5 +112,9 @@ export function parseSingleDate(date) {
         return;
     }
 
-    return parseDate(dateStrings[0]);
+    if (mayBeSession) {
+        return [false, parseDate(dateStrings[0])];
+    } else {
+        return parseDate(dateStrings[0]);
+    }
 }

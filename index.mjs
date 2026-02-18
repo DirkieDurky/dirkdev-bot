@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 import { Client, Collection, Events, GatewayIntentBits, MessageFlags } from 'discord.js';
 import 'dotenv/config';
 import * as googleCalendar from "./googleCalendar.mjs";
-import { formatDate, dirname, parseDate, dateRegex } from "./helpers.mjs";
+import { formatDate, dirname, parseDate, dateRegex, sessionRegex, parseSession } from "./helpers.mjs";
 
 const client = new Client({
     intents: [
@@ -39,8 +39,36 @@ client.on(Events.MessageCreate, async (message) => {
         }
         console.log(formatDate(new Date()), "|", "Channel and author correct");
 
-        const dateStrings = message.content.match(dateRegex);
+        const doneDates = [];
+        console.log(formatDate(new Date()), "|", "Complex dates:");
 
+        const sessionStrings = message.content.match(sessionRegex);
+
+        if (sessionStrings === null) {
+            console.log(formatDate(new Date()), "|", "No dates found.");
+            return;
+        }
+
+        console.log(formatDate(new Date()), "|", "Found these dates in the message:");
+        console.log(formatDate(new Date()), "|", sessionStrings);
+
+        console.log(formatDate(new Date()), "|", "Those parse to the following dates:");
+        const sessions = [];
+        for (const sessionStr of sessionStrings) {
+            const session = parseSession(sessionStr);
+            sessions.push(session);
+            const date = session[0].getDate();
+            if (doneDates.includes(date)) continue;
+            doneDates.push(date);
+        }
+
+        for (let session of sessions) {
+            await googleCalendar.createEvent(process.env.CALENDAR_ID, session[0], session[1]);
+        }
+
+        console.log(formatDate(new Date()), "|", "Simple dates:");
+
+        const dateStrings = message.content.match(dateRegex);
         if (dateStrings === null) {
             console.log(formatDate(new Date()), "|", "No dates found.");
             return;
@@ -54,6 +82,8 @@ client.on(Events.MessageCreate, async (message) => {
         for (const dateStr of dateStrings) {
             const date = parseDate(dateStr);
             dates.push(date);
+            if (doneDates.includes(date)) continue;
+            doneDates.push(date);
             console.log(date.toString());
         }
 
@@ -66,6 +96,7 @@ client.on(Events.MessageCreate, async (message) => {
             endDateTime.setMinutes(45);
             await googleCalendar.createEvent(process.env.CALENDAR_ID, startDateTime, endDateTime);
         }
+
     } catch (err) {
         console.error(`Error: ${err}`);
     }
