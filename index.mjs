@@ -1,36 +1,23 @@
-import { Client, Events, GatewayIntentBits } from 'discord.js';
+import fs from 'fs';
+import path from 'path';
+import { pathToFileURL } from 'url';
+import { Client, Collection, Events, GatewayIntentBits, MessageFlags } from 'discord.js';
 import 'dotenv/config';
 import * as googleCalendar from "./googleCalendar.mjs";
-import { formatDate } from "./helpers.mjs";
+import { formatDate, dirname, parseDate, dateRegex } from "./helpers.mjs";
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages
     ]
 });
 
-const calendarApi = await googleCalendar.authorizeGoogleAPI();
-
-client.once(Events.ClientReady, (readyClient) => {
+client.once(Events.ClientReady, async (readyClient) => {
     console.log(formatDate(new Date()), "|", `Ready! Logged in as ${readyClient.user.tag}`);
 });
-
-const months = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
-
-const now = new Date();
-const currentYear = now.getFullYear();
-function parseDate(date) {
-    const split = date.split(' ');
-    const month = months.indexOf(split[1]);
-    let year = currentYear;
-    if (month < now.getMonth()) {
-        year++;
-    }
-    const day = split[0];
-    return new Date(year, month, day);
-};
 
 client.on(Events.MessageCreate, async (message) => {
     try {
@@ -52,7 +39,6 @@ client.on(Events.MessageCreate, async (message) => {
         }
         console.log(formatDate(new Date()), "|", "Channel and author correct");
 
-        const dateRegex = new RegExp(`\\d{1,2} (${months.join("|")})`, "g");
         const dateStrings = message.content.match(dateRegex);
 
         if (dateStrings === null) {
@@ -78,10 +64,57 @@ client.on(Events.MessageCreate, async (message) => {
             const endDateTime = new Date(date.getTime());
             endDateTime.setHours(15);
             endDateTime.setMinutes(45);
-            await googleCalendar.createEvent(calendarApi, process.env.CALENDAR_ID, startDateTime, endDateTime);
+            await googleCalendar.createEvent(process.env.CALENDAR_ID, startDateTime, endDateTime);
         }
     } catch (err) {
         console.error(`Error: ${err}`);
+    }
+});
+
+client.commands = new Collection();
+
+const foldersPath = path.join(dirname(), 'commands');
+const commandFolders = fs.readdirSync(foldersPath);
+
+for (const folder of commandFolders) {
+    const commandsPath = path.join(foldersPath, folder);
+    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+    for (const file of commandFiles) {
+        const filePath = path.join(commandsPath, file);
+        const command = await import(pathToFileURL(filePath).href);
+        // Set a new item in the Collection with the key as the command name and the value as the exported module
+        if ('data' in command && 'execute' in command) {
+            client.commands.set(command.data.name, command);
+        } else {
+            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+        }
+    }
+}
+
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    const command = interaction.client.commands.get(interaction.commandName);
+
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
+        return;
+    }
+
+    try {
+        await command.execute(interaction);
+    } catch (error) {
+        console.error(error);
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+                content: 'There was an error while executing this command!',
+                flags: MessageFlags.Ephemeral,
+            });
+        } else {
+            await interaction.reply({
+                content: 'There was an error while executing this command!',
+                flags: MessageFlags.Ephemeral,
+            });
+        }
     }
 });
 

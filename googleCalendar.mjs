@@ -5,8 +5,10 @@ import 'dotenv/config';
 
 const REDIRECT_URI = "http://localhost";
 
+const calendarApi = await authorizeGoogleAPI();
+
 export async function getRefreshToken() {
-    const oauth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, REDIRECT_URI);
+    const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, REDIRECT_URI);
 
     const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
@@ -31,7 +33,7 @@ export async function getRefreshToken() {
 }
 
 export async function authorizeGoogleAPI() {
-    const oauth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, REDIRECT_URI);
+    const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, REDIRECT_URI);
     oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
     oauth2Client.on('tokens', (tokens) => {
@@ -56,7 +58,7 @@ export async function authorizeGoogleAPI() {
     return google.calendar({ version: 'v3', auth: oauth2Client });
 }
 
-export async function clearWeek(calendarApi, calendarId, startDate, endDate) {
+export async function clearDays(calendarId, startDate, endDate) {
     const res = await calendarApi.events.list({
         calendarId,
         timeMin: startDate.toISOString(),
@@ -78,9 +80,11 @@ export async function clearWeek(calendarApi, calendarId, startDate, endDate) {
             })
         )
     );
+
+    return events.length;
 }
 
-export async function createEvent(calendarApi, calendarId, startDateTime, endDateTime) {
+export async function createEvent(calendarId, startDateTime, endDateTime) {
     const event = {
         summary: `D&D`,
         start: {
@@ -98,7 +102,66 @@ export async function createEvent(calendarApi, calendarId, startDateTime, endDat
         });
         console.log(formatDate(new Date()), "|", 'Event successfully created!');
         console.log(formatDate(new Date()), "|", 'View Event:', response.data.htmlLink);
+        return response.data;
     } catch (error) {
         console.error(formatDate(new Date()), "|", 'Error creating event:', error.message);
+        throw error;
     }
+}
+
+export async function moveEvents(calendarId, fromDate, toDate) {
+    const fromDateStart = new Date(fromDate.getTime());
+    const fromDateEnd = new Date(fromDate.getTime());
+    fromDateEnd.setDate(fromDateEnd.getDate() + 1);
+
+    const res = await calendarApi.events.list({
+        calendarId,
+        timeMin: fromDateStart.toISOString(),
+        timeMax: fromDateEnd.toISOString(),
+        singleEvents: true,
+        orderBy: "startTime",
+    });
+
+    const events = res.data.items;
+    if (!events || events.length === 0) {
+        console.log(formatDate(new Date()), "|", "No events found to move.");
+        return 0;
+    }
+
+    console.log(formatDate(new Date()), "|", `${events.length} events found to move.`);
+
+    let movedCount = 0;
+    for (const event of events) {
+        try {
+            let origStart, origEnd;
+            origStart = new Date(event.start.dateTime);
+
+            if (event.end?.dateTime) {
+                origEnd = new Date(event.end.dateTime);
+            } else if (event.end?.date) {
+                origEnd = new Date(event.end.date + 'T00:00:00');
+            }
+
+            let newStart, newEnd;
+            newStart = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(),
+                origStart.getHours(), origStart.getMinutes(), origStart.getSeconds(), origStart.getMilliseconds());
+
+            const durationMs = origEnd.getTime() - origStart.getTime();
+            newEnd = new Date(newStart.getTime() + durationMs);
+
+            await createEvent(calendarId, newStart, newEnd);
+
+            await calendarApi.events.delete({
+                calendarId,
+                eventId: event.id,
+            });
+
+            movedCount++;
+        } catch (err) {
+            console.error(formatDate(new Date()), "|", `Failed to move event ${event.id}:`, err);
+        }
+    }
+
+    console.log(formatDate(new Date()), "|", `Moved ${movedCount} event(s).`);
+    return movedCount;
 }
