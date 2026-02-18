@@ -46,24 +46,26 @@ client.on(Events.MessageCreate, async (message) => {
 
         if (sessionStrings === null) {
             console.log(formatDate(new Date()), "|", "No dates found.");
-            return;
-        }
+        } else {
+            console.log(formatDate(new Date()), "|", "Found these dates in the message:");
+            console.log(formatDate(new Date()), "|", sessionStrings);
 
-        console.log(formatDate(new Date()), "|", "Found these dates in the message:");
-        console.log(formatDate(new Date()), "|", sessionStrings);
+            console.log(formatDate(new Date()), "|", "Those parse to the following dates:");
+            const sessions = [];
+            for (const sessionStr of sessionStrings) {
+                const session = parseSession(sessionStr);
+                sessions.push(session);
+                const doneDate = [session[0].getDate(), session[0].getMonth()];
+                if (doneDates.some(elem => {
+                    return JSON.stringify(doneDate) === JSON.stringify(elem);
+                })) continue;
+                doneDates.push(doneDate);
+                console.log(doneDates);
+            }
 
-        console.log(formatDate(new Date()), "|", "Those parse to the following dates:");
-        const sessions = [];
-        for (const sessionStr of sessionStrings) {
-            const session = parseSession(sessionStr);
-            sessions.push(session);
-            const date = session[0].getDate();
-            if (doneDates.includes(date)) continue;
-            doneDates.push(date);
-        }
-
-        for (let session of sessions) {
-            await googleCalendar.createEvent(process.env.CALENDAR_ID, session[0], session[1]);
+            for (let session of sessions) {
+                await googleCalendar.createEvent(process.env.CALENDAR_ID, session[0], session[1]);
+            }
         }
 
         console.log(formatDate(new Date()), "|", "Simple dates:");
@@ -81,10 +83,13 @@ client.on(Events.MessageCreate, async (message) => {
         const dates = [];
         for (const dateStr of dateStrings) {
             const date = parseDate(dateStr);
+            const doneDate = [date.getDate(), date.getMonth()];
+            if (doneDates.some(elem => {
+                return JSON.stringify(doneDate) === JSON.stringify(elem);
+            })) continue;
+            doneDates.push(doneDate);
             dates.push(date);
-            if (doneDates.includes(date)) continue;
-            doneDates.push(date);
-            console.log(date.toString());
+            console.log(doneDates);
         }
 
         for (let date of dates) {
