@@ -61,7 +61,7 @@ export function parseDate(date) {
     return new Date(year, month, day);
 };
 
-export const sessionRegex = new RegExp(`(\\d{1,2}) (${months.join("|")})\\w*(?: van)? (\\d{1,2}):(\\d{1,2})(?: uur)?(?: tot)? (\\d{1,2}):(\\d{1,2})(?: uur)?`, "g");
+export const sessionRegex = new RegExp(`(\\d{1,2}) (${months.join("|")})\\w*(?: van(?:af))? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?(?: tot(?: en met))? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?`, "g");
 
 export function parseSession(dateStr) {
     const matches = sessionRegex.exec(dateStr);
@@ -79,11 +79,11 @@ export function parseSession(dateStr) {
 
     const startDateTime = new Date(date.getTime());
     startDateTime.setHours(matches[3]);
-    startDateTime.setMinutes(matches[4]);
+    startDateTime.setMinutes(matches[4] ?? 0);
 
     const endDateTime = new Date(date.getTime());
     endDateTime.setHours(matches[5]);
-    endDateTime.setMinutes(matches[6]);
+    endDateTime.setMinutes(matches[6] ?? 0);
 
     return [startDateTime, endDateTime];
 };
