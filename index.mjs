@@ -130,7 +130,7 @@ for (const folder of commandFolders) {
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
-    if (process.env.DEBUG == "true" && interaction.channelId === process.env.DISCORD_DEBUG_TARGET_CHANNEL_ID) {
+    if (process.env.DEBUG === "true" && interaction.channelId === process.env.DISCORD_DEBUG_TARGET_CHANNEL_ID) {
         console.log("Debug mode is enabled and test channel is used. Ignoring channel and author check.");
     }
     else {
@@ -138,9 +138,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
             console.log(formatDate(new Date()), "|", "Channel doesn't match");
             return;
         }
-        if (!process.env.DISCORD_TARGET_AUTHOR_IDS.split(',').includes(interaction.member.id)) {
-            console.log(formatDate(new Date()), "|", "Author doesn't match");
-            return;
+        if (process.env.LOCK !== "true") {
+            console.log("Lock disabled. Skipping author check.")
+        } else {
+            if (!process.env.DISCORD_TARGET_AUTHOR_IDS.split(',').includes(interaction.member.id)) {
+                console.log(formatDate(new Date()), "|", "Author doesn't match");
+                return;
+            }
         }
     }
 
