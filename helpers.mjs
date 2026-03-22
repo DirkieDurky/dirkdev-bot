@@ -94,7 +94,7 @@ export function parseSingleDate(date, mayBeSession = false) {
 
         if (sessionStrings !== null) {
             if (sessionStrings.length > 1) {
-                console.log(formatDate(new Date()), "|", "Multiple dates found. One is expected per parameter");
+                console.log("Multiple dates found. One is expected per parameter");
                 return;
             }
             return [true, parseSession(sessionStrings[0])];
@@ -104,11 +104,11 @@ export function parseSingleDate(date, mayBeSession = false) {
     const dateStrings = date.match(dateRegex);
 
     if (dateStrings === null) {
-        console.log(formatDate(new Date()), "|", "No dates found.");
+        console.log("No dates found.");
         return;
     }
     if (dateStrings.length > 1) {
-        console.log(formatDate(new Date()), "|", "Multiple dates found. One is expected per parameter");
+        console.log("Multiple dates found. One is expected per parameter");
         return;
     }
 

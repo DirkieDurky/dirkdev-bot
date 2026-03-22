@@ -1,6 +1,5 @@
 import { google } from "googleapis";
 import readline from "readline";
-import { formatDate } from "./helpers.mjs";
 import 'dotenv/config';
 
 const REDIRECT_URI = "http://localhost";
@@ -16,7 +15,7 @@ export async function getRefreshToken() {
         scope: ['https://www.googleapis.com/auth/calendar'],
     });
 
-    console.log(formatDate(new Date()), "|", 'Authorize this app by visiting this url:', authUrl);
+    console.log('Authorize this app by visiting this url:', authUrl);
 
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
@@ -70,7 +69,7 @@ export async function clearDays(calendarId, startDate, endDate) {
     const events = res.data.items;
     if (!events || events.length === 0) return;
 
-    console.log(formatDate(new Date()), "|", `${events.length} events found to delete`);
+    console.log(`${events.length} events found to delete`);
 
     await Promise.all(
         events.map((event) =>
@@ -100,11 +99,11 @@ export async function createEvent(calendarId, startDateTime, endDateTime) {
             calendarId: calendarId,
             resource: event,
         });
-        console.log(formatDate(new Date()), "|", 'Event successfully created!');
-        console.log(formatDate(new Date()), "|", 'View Event:', response.data.htmlLink);
+        console.log('Event successfully created!');
+        console.log('View Event:', response.data.htmlLink);
         return response.data;
     } catch (error) {
-        console.error(formatDate(new Date()), "|", 'Error creating event:', error.message);
+        console.error('Error creating event:', error.message);
         throw error;
     }
 }
@@ -124,11 +123,11 @@ export async function moveEvents(calendarId, fromDate, toDate) {
 
     const events = res.data.items;
     if (!events || events.length === 0) {
-        console.log(formatDate(new Date()), "|", "No events found to move.");
+        console.log("No events found to move.");
         return 0;
     }
 
-    console.log(formatDate(new Date()), "|", `${events.length} events found to move.`);
+    console.log(`${events.length} events found to move.`);
 
     let movedCount = 0;
     for (const event of events) {
@@ -158,10 +157,10 @@ export async function moveEvents(calendarId, fromDate, toDate) {
 
             movedCount++;
         } catch (err) {
-            console.error(formatDate(new Date()), "|", `Failed to move event ${event.id}:`, err);
+            console.error(`Failed to move event ${event.id}:`, err);
         }
     }
 
-    console.log(formatDate(new Date()), "|", `Moved ${movedCount} event(s).`);
+    console.log(`Moved ${movedCount} event(s).`);
     return movedCount;
 }
