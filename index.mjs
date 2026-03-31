@@ -192,4 +192,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
+client.on('error', err => {
+    console.error('Client error:', err);
+});
+
+client.on('shardError', err => {
+    console.error('Shard error:', err);
+});
+
+process.on('uncaughtException', err => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', err => {
+    console.error('Unhandled Rejection:', err);
+});
+
 client.login(process.env.DISCORD_APP_TOKEN);
