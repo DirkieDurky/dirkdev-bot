@@ -70,15 +70,15 @@ client.on(Events.MessageCreate, async (message) => {
 
         console.log("Simple dates:");
         console.log("Evening:");
-        await handleSimpleDates(true, message.content);
+        await handleSimpleDates(true, message.content, doneDates);
         console.log("Non-evening:");
-        await handleSimpleDates(false, message.content);
+        await handleSimpleDates(false, message.content, doneDates);
     } catch (err) {
         console.error(`Error: ${err}`);
     }
 });
 
-async function handleSimpleDates(evening, input) {
+async function handleSimpleDates(evening, input, doneDates) {
     let dateStrings;
     if (evening) {
         dateStrings = input.match(eveningDateRegex);
@@ -104,14 +104,12 @@ async function handleSimpleDates(evening, input) {
         console.log("Found these dates in the message:");
         console.log(dateStrings);
 
-        console.log("Those parse to the following dates:");
         const dates = [];
         for (const dateStr of dateStrings) {
             const date = parseDate(dateStr);
             const doneDate = [date.getDate(), date.getMonth()];
             doneDates.push(doneDate);
             dates.push(date);
-            console.log(doneDates);
         }
 
         for (let date of dates) {
