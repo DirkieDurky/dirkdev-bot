@@ -70,15 +70,15 @@ client.on(Events.MessageCreate, async (message) => {
 
         console.log("Simple dates:");
         console.log("Evening:");
-        handleSimpleDates(true);
+        await handleSimpleDates(true);
         console.log("Non-evening:");
-        handleSimpleDates(false);
+        await handleSimpleDates(false);
     } catch (err) {
         console.error(`Error: ${err}`);
     }
 });
 
-function handleSimpleDates(evening) {
+async function handleSimpleDates(evening) {
     let dateStrings;
     if (evening) {
         dateStrings = message.content.match(eveningDateRegex);
