@@ -45,6 +45,7 @@ export function dirname() { return path.dirname(fileURLToPath(import.meta.url));
 
 const months = ["jan", "feb", "maa", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 
+export const eveningDateRegex = new RegExp(`((?<=avond.*)\\d{1,2} (${months.join("|")}))|(\\d{1,2} (${months.join("|")})(?=.*avond))`, "gm");
 export const dateRegex = new RegExp(`\\d{1,2} (${months.join("|")})`, "g");
 
 export function parseDate(date) {
@@ -61,7 +62,7 @@ export function parseDate(date) {
     return new Date(year, month, day);
 };
 
-export const sessionRegex = new RegExp(`(\\d{1,2}) (${months.join("|")})\\w*(?: van(?:af))? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?(?: tot(?: en met))? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?`, "g");
+export const sessionRegex = new RegExp(`(\\d{1,2}) (${months.join("|")})\\w*(?: van(?:af)?)? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?(?: tot(?: en met)?)? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?`, "g");
 
 export function parseSession(dateStr) {
     const matches = sessionRegex.exec(dateStr);
@@ -101,20 +102,41 @@ export function parseSingleDate(date, mayBeSession = false) {
         }
     }
 
-    const dateStrings = date.match(dateRegex);
-
+    let evening = true;
+    let dateStrings = date.match(eveningDateRegex);
     if (dateStrings === null) {
-        console.log("No dates found.");
-        return;
+        evening = false;
+        dateStrings = date.match(dateRegex);
+        if (dateStrings === null) {
+            console.log("No dates found.");
+            return;
+        }
     }
+
     if (dateStrings.length > 1) {
         console.log("Multiple dates found. One is expected per parameter");
         return;
     }
 
-    if (mayBeSession) {
-        return [false, parseDate(dateStrings[0])];
+    const foundDate = parseDate(dateStrings[0]);
+
+    const startDateTime = new Date(foundDate.getTime());
+    const endDateTime = new Date(foundDate.getTime());
+    if (evening) {
+        startDateTime.setHours(19);
+        startDateTime.setMinutes(0);
+        endDateTime.setHours(21);
+        endDateTime.setMinutes(15);
     } else {
-        return parseDate(dateStrings[0]);
+        startDateTime.setHours(13);
+        startDateTime.setMinutes(30);
+        endDateTime.setHours(15);
+        endDateTime.setMinutes(45);
+    }
+
+    if (mayBeSession) {
+        return [false, startDateTime, endDateTime];
+    } else {
+        return [startDateTime, endDateTime];
     }
 }

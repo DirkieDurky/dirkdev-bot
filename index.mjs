@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 import { Client, Collection, Events, GatewayIntentBits, MessageFlags } from 'discord.js';
 import 'dotenv/config';
 import * as googleCalendar from "./googleCalendar.mjs";
-import { dirname, parseDate, dateRegex, sessionRegex, parseSession } from "./helpers.mjs";
+import { dirname, parseDate, dateRegex, sessionRegex, parseSession, eveningDateRegex } from "./helpers.mjs";
 
 const client = new Client({
     intents: [
@@ -40,12 +40,12 @@ client.on(Events.MessageCreate, async (message) => {
         console.log("Channel and author correct");
 
         const doneDates = [];
-        console.log("Complex dates:");
+        console.log("Complex dates:"); // (or sessions)
 
         const sessionStrings = message.content.match(sessionRegex);
 
         if (sessionStrings === null) {
-            console.log("No dates found.");
+            console.log("No complex dates found.");
         } else {
             console.log("Found these dates in the message:");
             console.log(sessionStrings);
@@ -70,38 +70,57 @@ client.on(Events.MessageCreate, async (message) => {
 
         console.log("Simple dates:");
 
-        const dateStrings = message.content.match(dateRegex);
+        let evening = true;
+        let dateStrings = message.content.match(eveningDateRegex);
         if (dateStrings === null) {
-            console.log("No dates found.");
-            return;
+            evening = false;
+            dateStrings = message.content.match(dateRegex);
+            if (dateStrings === null) {
+                console.log("No dates found.");
+                return;
+            }
         }
 
-        console.log("Found these dates in the message:");
-        console.log(dateStrings);
-
-        console.log("Those parse to the following dates:");
-        const dates = [];
-        for (const dateStr of dateStrings) {
-            const date = parseDate(dateStr);
+        // Filter out dates that were already covered by the complex check
+        dateStrings = dateStrings.filter(e => !doneDates.some(e2 => {
+            const date = parseDate(e);
             const doneDate = [date.getDate(), date.getMonth()];
-            if (doneDates.some(elem => {
-                return JSON.stringify(doneDate) === JSON.stringify(elem);
-            })) continue;
-            doneDates.push(doneDate);
-            dates.push(date);
-            console.log(doneDates);
-        }
+            return JSON.stringify(doneDate) === JSON.stringify(e2);
+        }));
 
-        for (let date of dates) {
-            const startDateTime = new Date(date.getTime());
-            startDateTime.setHours(13);
-            startDateTime.setMinutes(30);
-            const endDateTime = new Date(date.getTime());
-            endDateTime.setHours(15);
-            endDateTime.setMinutes(45);
-            await googleCalendar.createEvent(process.env.CALENDAR_ID, startDateTime, endDateTime);
-        }
+        if (dateStrings.length === 0) {
+            console.log("No simple dates found.");
+        } else {
+            console.log("Found these dates in the message:");
+            console.log(dateStrings);
 
+            console.log("Those parse to the following dates:");
+            const dates = [];
+            for (const dateStr of dateStrings) {
+                const date = parseDate(dateStr);
+                const doneDate = [date.getDate(), date.getMonth()];
+                doneDates.push(doneDate);
+                dates.push(date);
+                console.log(doneDates);
+            }
+
+            for (let date of dates) {
+                const startDateTime = new Date(date.getTime());
+                const endDateTime = new Date(date.getTime());
+                if (evening) {
+                    startDateTime.setHours(19);
+                    startDateTime.setMinutes(0);
+                    endDateTime.setHours(21);
+                    endDateTime.setMinutes(15);
+                } else {
+                    startDateTime.setHours(13);
+                    startDateTime.setMinutes(30);
+                    endDateTime.setHours(15);
+                    endDateTime.setMinutes(45);
+                }
+                await googleCalendar.createEvent(process.env.CALENDAR_ID, startDateTime, endDateTime);
+            }
+        }
     } catch (err) {
         console.error(`Error: ${err}`);
     }

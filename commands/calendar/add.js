@@ -12,16 +12,11 @@ export async function execute(interaction) {
     const isSession = parseInfo[0];
 
     if (!isSession) {
-        const date = parseInfo[1];
-        console.log(`Parsed date: ${formatDate(date)}`);
-        const startDateTime = new Date(date.getTime());
-        startDateTime.setHours(13);
-        startDateTime.setMinutes(30);
-        const endDateTime = new Date(date.getTime());
-        endDateTime.setHours(15);
-        endDateTime.setMinutes(45);
+        const startDateTime = parseInfo[1];
+        const endDateTime = parseInfo[2];
+        console.log(`Parsed session: From ${formatDateTime(startDateTime)} to ${formatDateTime(endDateTime)} on ${formatDateShort(startDateTime)}`);
         await googleCalendar.createEvent(process.env.CALENDAR_ID, startDateTime, endDateTime);
-        await interaction.reply(`Added session at ${formatDateShort(date)}`);
+        await interaction.reply(`Added session from ${formatDateTime(startDateTime)} to ${formatDateTime(endDateTime)} on ${formatDateShort(startDateTime)}`);
     } else {
         const session = parseInfo[1];
         const startDateTime = session[0];
