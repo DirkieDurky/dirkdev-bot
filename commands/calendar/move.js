@@ -14,5 +14,7 @@ export async function execute(interaction) {
     console.log(`Parsed dates: ${formatDate(fromDate)}, ${formatDate(toDate)}`);
 
     await googleCalendar.moveEvents(process.env.CALENDAR_ID, fromDate, toDate);
-    await interaction.reply(`Moved sessions from ${formatDateShort(fromDate)} to ${formatDateShort(toDate)}`);
+    const response = `Moved sessions from ${formatDateShort(fromDate)} to ${formatDateShort(toDate)}`;
+    console.log(response);
+    await interaction.reply(response);
 }

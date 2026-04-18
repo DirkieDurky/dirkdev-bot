@@ -23,5 +23,7 @@ export async function execute(interaction) {
     endDateTime.setDate(endDateTime.getDate() + 1);
 
     const removedAmount = await googleCalendar.clearDays(process.env.CALENDAR_ID, startDateTime, endDateTime);
-    await interaction.reply(`Removed ${removedAmount ?? 0} session${removedAmount == 1 ? "" : "s"} `);
+    const response = `Removed ${removedAmount ?? 0} session${removedAmount == 1 ? "" : "s"}`;
+    console.log(response);
+    await interaction.reply(response);
 }

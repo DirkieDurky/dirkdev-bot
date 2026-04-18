@@ -10,10 +10,6 @@ const dateFormatter = new Intl.DateTimeFormat("nl-NL", {
     year: "numeric",
     month: "short",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
     hour12: false
 });
 
@@ -64,6 +60,7 @@ export function parseDate(date) {
 
 export const sessionRegex = new RegExp(`(\\d{1,2}) (${months.join("|")})\\w*(?: van(?:af)?)? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?(?: tot(?: en met)?)? (\\d{1,2})(?::(\\d{1,2}))?(?: uur)?`, "g");
 
+// Session is a date with start and end time
 export function parseSession(dateStr) {
     const matches = sessionRegex.exec(dateStr);
 
@@ -121,19 +118,19 @@ export function parseSingleDate(date, inputMayIncludeTimes = false) {
     const foundDate = parseDate(dateStrings[0]);
 
     if (inputMayIncludeTimes) {
-    const startDateTime = new Date(foundDate.getTime());
-    const endDateTime = new Date(foundDate.getTime());
-    if (evening) {
-        startDateTime.setHours(19);
-        startDateTime.setMinutes(0);
-        endDateTime.setHours(21);
-        endDateTime.setMinutes(15);
-    } else {
-        startDateTime.setHours(13);
-        startDateTime.setMinutes(30);
-        endDateTime.setHours(15);
-        endDateTime.setMinutes(45);
-    }
+        const startDateTime = new Date(foundDate.getTime());
+        const endDateTime = new Date(foundDate.getTime());
+        if (evening) {
+            startDateTime.setHours(19);
+            startDateTime.setMinutes(0);
+            endDateTime.setHours(21);
+            endDateTime.setMinutes(15);
+        } else {
+            startDateTime.setHours(13);
+            startDateTime.setMinutes(30);
+            endDateTime.setHours(15);
+            endDateTime.setMinutes(45);
+        }
 
         return [false, startDateTime, endDateTime];
     } else {
