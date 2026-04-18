@@ -89,8 +89,8 @@ export function parseSession(dateStr) {
     return [startDateTime, endDateTime];
 };
 
-export function parseSingleDate(date, mayBeSession = false) {
-    if (mayBeSession) {
+export function parseSingleDate(date, inputMayIncludeTimes = false) {
+    if (inputMayIncludeTimes) {
         const sessionStrings = date.match(sessionRegex);
 
         if (sessionStrings !== null) {
@@ -120,6 +120,7 @@ export function parseSingleDate(date, mayBeSession = false) {
 
     const foundDate = parseDate(dateStrings[0]);
 
+    if (inputMayIncludeTimes) {
     const startDateTime = new Date(foundDate.getTime());
     const endDateTime = new Date(foundDate.getTime());
     if (evening) {
@@ -134,9 +135,8 @@ export function parseSingleDate(date, mayBeSession = false) {
         endDateTime.setMinutes(45);
     }
 
-    if (mayBeSession) {
         return [false, startDateTime, endDateTime];
     } else {
-        return [startDateTime, endDateTime];
+        return foundDate;
     }
 }
